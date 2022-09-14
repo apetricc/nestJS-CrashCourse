@@ -1,4 +1,5 @@
 import { ReportType } from "src/data";
+import { CreateReportDto, UpdateReportDto } from "src/dtos/report.dto";
 import { AppService } from "./app.service";
 export declare class AppController {
     private readonly appService;
@@ -19,10 +20,7 @@ export declare class AppController {
         updated_at: Date;
         type: ReportType;
     };
-    createReport({ amount, source }: {
-        amount: number;
-        source: string;
-    }, type: string): {
+    createReport({ amount, source }: CreateReportDto, type: string): {
         id: string;
         source: string;
         amount: number;
@@ -34,10 +32,7 @@ export declare class AppController {
         amount: number;
         source: string;
     }, id: string, type: string): string;
-    updateReport(body: {
-        amount: number;
-        source: string;
-    }, id: string, type: string): {
+    updateReport(body: UpdateReportDto, id: string, type: string): {
         id: string;
         source: string;
         amount: number;
@@ -46,6 +41,6 @@ export declare class AppController {
         type: ReportType;
     };
     myDeleteReport(id: string, type: string): string;
-    deleteReport(id: string, type: string): string;
+    deleteReport(id: string): string;
     getHello(): string;
 }

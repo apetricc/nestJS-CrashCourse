@@ -60,3 +60,153 @@ project there can be MANY controllers, and using the modules really helps manage
 
 Now @1.46 we want to do the same for our other methods;
 
+@1.53.07    I could've sworn he had type in the delete method, but it's gone as we migrate it to app.service.ts...
+I guess I was wrong, we don't need the type to delete something, makes sense if we have the UUID;
+
+I had put it in to print out `Deleted ${INCOME/EXPENSE} report with id ${UUID}`
+
+@1.53.41 -- discussing why we want to put our logic in the app.service.ts file  -- it's so we can import it later as needed!
+
+he 'accidentally' had his delete function calling itself in the controller:
+return this.deleteReport(id);
+instead of:
+return this.appService.deleteReport(id);
+which is a recursive call and led to stack overflow;
+
+@1.59.30 -- going into validation of incoming properties;
+-------------------------
+Things to validate:
+validate that the id is a uuid;
+validate that the body is correct;
+validate that the type is either income | expense;
+
+Why validate the id?  If we don't get a uuid coming in we don't want to waste time/resources
+going further;
+Why validate the amount/source? --So users can't input random values or arrays etc;
+Why validate the type as income/expense? --same reason, so users can't put in random stuff/objects;
+
+the ID__________________________________
+incoming requests should look like this:
+report/income/abfb8b2c-da3c-40d9-bff2-8c63a41a1279
+
+& not like these examples:
+report/income/abc1234124    or      report/income/banana
+
+How do we do this?
+In Nest there are some entities to do this;
+We can use 'Pipes'
+"ParseIntPipe"  to start with; We will add it to the getReportById() method as
+a parameter with the incoming id like so:
+@Param('id', ParseIntPipe) id: string
+
+if we pass this request:
+/report/income/7
+the 'ParseIntPipe' will take a number passed in a request and convert it to a number type;
+
+this is great, and there are other Pipes to parse other types, what we want is to parse for a
+UUID though; so we need to use a 'ParseUUIDPipe'
+therefore if we pass
+/report/income/7
+it will fail ('expected uuid' error), if we pass:
+/report/income/abfb8b2c-da3c-40d9-bff2-8c63a41a1279
+it will work (only returning data if we have that specific uuid in our data set though)
+
+now we are validating the incoming UUIDs!
+
+
+@2.07.15
+validate the 'type' param__________________________
+So how can we validate the 'type' the comes in with request params;
+we need to use the enum pipe;
+'ParseEnumPipe'
+
+it's not so easy as just adding it next to all the incoming 'type' params though;
+we need to instantiate it so we can pass in our enum for it to use as reference of
+what is allowable;
+
+@Param('type', new ParseEnumPipe(ReportType))
+
+so we just add that everywhere we take in the @Param('type')
+
+@2.09.20
+validate the body______________________________________
+since the 'body' has stuff in it (amount, source), we can't just use a Pipe to parse/validate it;
+We need to ensure that the amount is a number, and the source is a string;
+
+We need to use a 'DTO'   transform and validate the body and outgoing response;
+We need to create this manually--> create new dir in src folder,
+create file "report.dto.ts"
+
+INSTALL PACKAGES FOR DTOS--
+we need to install some stuff with npm to do all this: class-validator, & class-transformer;
+
+"npm install class-validator class-transformer"
+
+what is a DTO ...?  a "data transfer object"
+
+To validate the stuff we want in the body, we define a class, and export it;
+Then we import it into our controller, like we did with the enum and other stuff;
+
+Then where we used in the CreateReport() method, we replace the stuff we had for body
+//we had:
+createReport(@Body()
+{ amount, source }: { amount: number; source: string; },
+@Param('type', new ParseEnumPipe(ReportType)) type: string) {
+
+//change to:
+createReport(@Body()
+{ amount, source }: CreateReportDto,
+@Param('type', new ParseEnumPipe(ReportType)) type: string) {
+
+This doesn't do any validation though, just the typing part;
+
+To get the validation in, we need to use some decorators from the
+class-validator library  which we need to import to our dto file/class
+
+for 'amount' we can try the @IsNumber decorator to ensure that it's a number,
+but we also need to ensure that it's a positive number as well...
+and there's a decorator for that as well:
+@IsPositive
+
+We also added the @IsString() and @IsNotEmpty decorators for
+source: string;
+This should provide validation right?
+Apparently not, we can create a new report and provide whatever for the source...
+@2.14.26
+
+To do this we need to go to the main.ts file, which is where the whole application
+is getting booted up;
+NestFactory generates a new Nest application
+
+we want to tell it to use the global pipes before listening on port 3000;
+here we can change the port to listen on as well, like to port 665 for example;
+
+@2.16.30  just added the app.useGlobalPipes(new ValidationPipe()); to main.ts which
+lets us do validation on the source and amount on createReport() in controller;
+
+moving on to the validation for the 'updateReport()' method;
+We want the source and the amount to be optional to update here;
+So we'll need a new DTO where we can make these optional, I think we use the "?source" or is it "source?" ?
+This works for objects, but for this DTO validation/validator we need to use another decorator: @IsOptional()
+but we can use the "?" on a new interface for UpdateReport, and use that as the type for our updateReport method in
+the app service;
+
+@2.20.50  we have the validation and the new updateReport DTO, which works great, but we can still add
+random key value pairs via the updatereport() method, which is not good.  So how to prevent it from accepting
+other stuff, aka reject any other fields that aren't defined in our DTO???
+
+in order to do this, we have to go to the main.ts file and in the ValidationPipe()  we have to pass in
+some options/params;  We want to use a param called "whitelist" and set it to 'true'
+this will cause our DTO/validationPipe to completely block anything else that isn't defined in our DTO!
+Exactly what we want here.
+app.useGlobalPipes(new ValidationPipe());  ---> app.useGlobalPipes(new ValidationPipe({whitelist:true}));
+also of note, we can have a trailing comma and it doesn't care here:
+app.useGlobalPipes(new ValidationPipe({whitelist:true,}));
+Also interesting, it doesn't error if you provide weird new key values, it just ignores them.
+
+@2.23.33 -- brand new section!  How to manipulate outgoing responses?
+in our local DB (which is just an array here, simple), our keys are using 'snake case' as in 'created_at' etc.
+
+What if we wanted to convert the snake_case into camelCase?
+
+

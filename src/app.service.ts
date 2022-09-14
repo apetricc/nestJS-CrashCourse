@@ -9,6 +9,16 @@ let getReportType = (input: string): string => {
   // else return ReportType.EXPENSE;
 }
 
+interface Report {
+  source: string,
+  amount: number
+};
+
+interface UpdateReport {
+  source?: string,
+  amount?: number
+}
+
 // This is where all the logic will live;
 // all entities in NestJS are classes so it will be class;
 
@@ -20,27 +30,46 @@ export class AppService {
     return data.report.filter((report) => report.type === type);
   }//getAllReports
 
-  getReportById(@Param('type') type: string, @Param('id') id: string){
+  getReportById(type: ReportType, id: string){
     return data.report.filter((report) => report.type === type).find(report => report.id === id);
   }
 
-  createReport(@Body() { amount, source }: { amount: number; source: string; }, @Param('type') type: string) {
-    // console.log({ body });
+  createReport(type: ReportType, {amount, source}: Report) {
     const newReport = {
       id: uuid(),
-      // source: body.source
-      // or simplify to--> source: source
-      // or even simpler to:
       source,
       amount,
       created_at: new Date(),
       updated_at: new Date(),
-      //type we have to extract from the params using @Param decorator (at 1:18:35)
-      type: type === "income" ? ReportType.INCOME : ReportType.EXPENSE
+      //Now we get type passed to us from the call in controller
+      type
     }
     data.report.push(newReport)
     return newReport;
   }
+
+  updateReport(type: ReportType, id: string, body: UpdateReport) {
+    // const reportType = type === "income" ? ReportType.INCOME : ReportType.EXPENSE
+    const reportToUpdate = data.report.filter((report) => report.type === type).find(report => report.id === id);
+    if (!reportToUpdate) return;
+    const reportIndex = data.report.findIndex((report) => report.id === reportToUpdate.id);
+    data.report[reportIndex] = {
+      ...data.report[reportIndex],
+      ...body,
+      updated_at: new Date()
+    }
+    return data.report[reportIndex];
+
+  }
+
+  deleteReport(id: string) {
+    const reportIndex = data.report.findIndex(report => report.id === id);
+    if(reportIndex === -1) return;
+    data.report.splice(reportIndex, 1);
+    //not sure if this message is reachable?  with the @HttpCode(204)
+    return `Deleted a report`;
+  }
+
 
 }// AppService class
 

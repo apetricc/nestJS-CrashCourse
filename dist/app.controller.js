@@ -14,8 +14,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppController = void 0;
 const common_1 = require("@nestjs/common");
-const uuid_1 = require("uuid");
 const data_1 = require("./data");
+const report_dto_1 = require("./dtos/report.dto");
 let myFunction = (a, b) => a / b;
 var hello = (val) => "Hello " + val;
 function getReportType1(input) {
@@ -38,20 +38,13 @@ let AppController = class AppController {
         return this.appService.getAllReports(reportType);
     }
     getReportById(type, id) {
+        console.log(id, typeof (id));
         const reportType = type === "income" ? data_1.ReportType.INCOME : data_1.ReportType.EXPENSE;
         return this.appService.getReportById(reportType, id);
     }
     createReport({ amount, source }, type) {
-        const newReport = {
-            id: (0, uuid_1.v4)(),
-            source,
-            amount,
-            created_at: new Date(),
-            updated_at: new Date(),
-            type: type === "income" ? data_1.ReportType.INCOME : data_1.ReportType.EXPENSE
-        };
-        data_1.data.report.push(newReport);
-        return newReport;
+        const reportType = type === "income" ? data_1.ReportType.INCOME : data_1.ReportType.EXPENSE;
+        return this.appService.createReport(reportType, { source, amount });
     }
     myUpdateReport({ amount, source }, id, type) {
         const newReport = {
@@ -72,12 +65,7 @@ let AppController = class AppController {
     }
     updateReport(body, id, type) {
         const reportType = type === "income" ? data_1.ReportType.INCOME : data_1.ReportType.EXPENSE;
-        const reportToUpdate = data_1.data.report.filter((report) => report.type === reportType).find(report => report.id === id);
-        if (!reportToUpdate)
-            return;
-        const reportIndex = data_1.data.report.findIndex((report) => report.id === reportToUpdate.id);
-        data_1.data.report[reportIndex] = Object.assign(Object.assign({}, data_1.data.report[reportIndex]), body);
-        return data_1.data.report[reportIndex];
+        return this.appService.updateReport(reportType, id, body);
     }
     myDeleteReport(id, type) {
         const reportType = type === "income" ? data_1.ReportType.INCOME : data_1.ReportType.EXPENSE;
@@ -88,12 +76,8 @@ let AppController = class AppController {
         data_1.data.report.splice(reportIndex);
         return `deleted ${type} report: ${id}`;
     }
-    deleteReport(id, type) {
-        const reportIndex = data_1.data.report.findIndex(report => report.id === id);
-        if (reportIndex === -1)
-            return;
-        data_1.data.report.splice(reportIndex, 1);
-        return `deleted ${type} report with id: ${id}`;
+    deleteReport(id) {
+        return this.appService.deleteReport(id);
     }
     getHello() {
         return "Hello!";
@@ -101,15 +85,15 @@ let AppController = class AppController {
 };
 __decorate([
     (0, common_1.Get)(''),
-    __param(0, (0, common_1.Param)('type')),
+    __param(0, (0, common_1.Param)('type', new common_1.ParseEnumPipe(data_1.ReportType))),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AppController.prototype, "getAllReports", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('type')),
-    __param(1, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Param)('type', new common_1.ParseEnumPipe(data_1.ReportType))),
+    __param(1, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
@@ -117,15 +101,15 @@ __decorate([
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Param)('type')),
+    __param(1, (0, common_1.Param)('type', new common_1.ParseEnumPipe(data_1.ReportType))),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [report_dto_1.CreateReportDto, String]),
     __metadata("design:returntype", void 0)
 ], AppController.prototype, "createReport", null);
 __decorate([
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Param)('id')),
-    __param(2, (0, common_1.Param)('type')),
+    __param(1, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(2, (0, common_1.Param)('type', new common_1.ParseEnumPipe(data_1.ReportType))),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", void 0)
@@ -133,15 +117,15 @@ __decorate([
 __decorate([
     (0, common_1.Put)(":id"),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Param)('id')),
-    __param(2, (0, common_1.Param)('type')),
+    __param(1, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(2, (0, common_1.Param)('type', new common_1.ParseEnumPipe(data_1.ReportType))),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:paramtypes", [report_dto_1.UpdateReportDto, String, String]),
     __metadata("design:returntype", void 0)
 ], AppController.prototype, "updateReport", null);
 __decorate([
     (0, common_1.Delete)('/myDelete/' + ':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __param(1, (0, common_1.Param)('type')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
@@ -150,10 +134,9 @@ __decorate([
 __decorate([
     (0, common_1.HttpCode)(204),
     (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Param)('type')),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AppController.prototype, "deleteReport", null);
 __decorate([
