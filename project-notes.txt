@@ -209,4 +209,205 @@ in our local DB (which is just an array here, simple), our keys are using 'snake
 
 What if we wanted to convert the snake_case into camelCase?
 
+We could go into our app.service file and when we push the new report to the DB, we could
+just take in each field and rename them, using "createdAt" instead of "created_at" (which we defined in our createReport() method)
+but that is a terrible solution and would take a lot of extra work.
+Instead we can accomplish our goal of snake_case --> camelCase using 'DTOs' and 'intercepters'
+
+So we'll create a DTO for the outgoing response;
+So far we used a DTO for the request body;
+We can also make a DTO for the response!
+@2.26.49
+
+let's go ahead and create the DTO for the response.
+We'll be applying this DTO to basically all the route handlers that we have defined;
+
+So we made our ReportReponseDto and added the @Exclude() decorator above "updated_at" prop (from "class-transformer")
+Then we set the return type of our methods in controller to this type ('ReportReponseDto')
+If we do this then we have to also update the return type in the app.service file as well;
+
+@2.31.40  We added the 'ReportReponseDto' as the return type for all our methods in the controller and service files,
+and we used the @Exclude decorator to omit the 'updated_at' property, so we shouldn't see that property any more right??
+No. It's a little more complicated than that;
+We specified the return type, but 'ReportReponseDto' is a class that needs to be instantiated;
+So I'm guessing we need to create a 'ReportReponseDto' object, and then actually return an instance of that object;
+----
+Our first adventure using this in our response is adding it to the getReportById() method in app.service;
+instead of just returning the report we find, we create a 'const' called report, and then pass that into our
+'ReportReponseDto'... except we didn't set up our DTO to accept input yet, so we have to do that too.
+Once it can accept input, our DTO can that get to transforming the objects that are coming in to it;
+To get it to accept input, we have to add a constructor to this DTO class of course;
+And in our constructor, we will use type Partial<ReportReponseDto>
+
+We add this new ReportReponseDto and pass in what we were returning before,
+like:
+return new ReportReponseDto(report);
+
+This is just step one though; we need to tell NestJS that it can go ahead and transform our objects
+
+@2.37.00  Step 2-- we need to tell NestJS that it can transform our objects in main.ts
+We add "transform: true" in the app.useGlobalPipes
+and also transformOptions: {
+        enableImplicitConversion: true,
+
+This STILL doesn't accomplish our goal of just having a proper responseDTO where we can omit the 'updated_at' prop...
+
+@2.37.50  --> we need to do something in the app.module.ts file;
+updating:
+"providers: [AppService],"
+
+to:
+providers: [AppService, {
+    provide: APP_INTERCEPTOR,
+    useClass: ClassSerializerInterceptor
+}],
+
+
+which we don't understand yet, but this makes it work!  We will come back to what's happening here,
+b/c the APP_INTERCEPTOR is another ENTITY in nestJS that we want to understand;
+
+Meantime we will pivot to converting 'created_at' to 'createdAt' in our DTO file;
+Before we used @Exclude, and now we want to use @Expose decorator;
+
+We @Expose a new property with camelCase-- 'createdAt' and pass in the created_at property with this.created_at
+this makes a new property/field in our response.
+Then we exclude the original 'created_at' basically.
+
+@2.41.36 -- circling back to APP_INTERCEPTOR ---
+
+what is an interceptor in nestJS ??
+
+
+ __   Interceptor          __
+|  |    ------>           |  |
+|  |  (request^)          |  |
+|  |                      |  |
+|  |    (response)        |  |
+|  |    <----------       |  |
+|__|    Interceptor       |__|
+
+client                    nestAPI (server)
+
+
+The interceptor acts like a man in the middle, it can intercept the requests before it hits the server,
+and it can intercept the response before it gets to the client;
+
+the code again:
+"provide: APP_INTERCEPTOR,
+useClass: ClassSerializerInterceptor"
+
+So our code in AppService is saying 'we want to provide an app interceptor'
+so for every request to our service, we want to intercept that request with the class serializer interceptor,
+(which a 'seriealizer' is just to modify data)  also, this is a built in interceptor, it is possible to write your
+own custom interceptors as well...
+
+Our setup is intercepting the response to the client, checking our DTOs, and somehow modifying the response
+that goes to the client.
+
+@2.45--   we will build our own custom interceptor just for learning purposes, even though we have a great
+built in interceptor that we'll actually keep using, but doing this will help learn more about interceptors;
+
+
+make a new file ./src/custom.interceptor.ts
+an interceptor is an entity (inside nestJS).  Entities are classes in nestJS;
+∴ it is made by a class, well, it IS a class, and then we can use that class;
+
+
+class CustomInterceptor implements NestInterceptor {
+    //we get an error saying we must have property "intercept" to impletment 'NestInterceptor'
+    // but I think that means we need a method called intercept
+    intercept(
+        // the context tells us more info about the incoming request, maybe the query params or whatever
+        // the handler is the endpoint or the next interceptor that we want to give it to,
+        // that we want to hand off our request to after we're done intercepting it here,
+        // in the diagram the handler would be the right box/endpoint/handler
+        context, handler
+    )
+
+@2.56.24  his custom interceptor is working but mine is not, maybe I didn't import correctly?
+Okay, it only is working on 'createReport' for some reason I don't know
+
+We won't delete our custom interceptor, but we will change our app.module.ts import to use the
+ClassSerializerInterceptor instead b/c it's already doing everything we want;
+so in app.module.ts we had:
+import { CustomInterceptor } from "./custom.interceptor"
+
+providers: [AppService, {
+    provide: APP_INTERCEPTOR,
+    // useClass: ClassSerializerInterceptor
+    useClass: CustomInterceptor,
+  }],
+
+and we're changing it back to use ClassSerializerInterceptor
+@2.57   we're basically done at this point;
+
+@2.57.39  LAST THING-- we need to talk about how we're structuring our files/directories;
+
+@2.58:
+before we get to that (in classic Laith style), we are going to add another endpoint
+which will calculate and display a summary--basically our total income and expenses
+
+/summary
+
+how do we add a new endpoint with a whole new path?
+We already added /report as the base path to everthing...
+
+The problem also lies in the fact that we should never have had all that logic
+in our controller for the report endpoints.
+So we should
+1. make a new controller to handle "/summary"
+2. make another file to hold our "/report" logic
+3. tie it all together somehow maybe with another file, or maybe not idk
+
+We make a new module for /summary using the nest cli -->
+
+nest g module summary
+
+nest (for nest CLI), g (for 'generate'), module (what we're generating), summary (what we want it called)
+
+--> this cmd created a new folder in our ./src/ dir, and it updated the app.module.ts file so we can use it;
+@3.00 - 3.01  next we generate a controller, and we'll generate a service as well for /summary
+again with the nest CLI:
+nest g controller summary
+
+This created a controller, and also a .spec file, which is for testing, which he says he talks about
+in the next project, so maybe that is worth doing;
+
+it also updated teh summary.module; it says there's now a controller called "SummaryController" :
+@Module({
+  controllers: [SummaryController]
+})
+
+and it also got imported to app.module, so it will know about the SummaryController;
+last thing we need is a service-->
+
+drew ==>nest g controller service
+CREATE src/service/service.controller.spec.ts (499 bytes)
+CREATE src/service/service.controller.ts (103 bytes)
+UPDATE src/app.module.ts (690 bytes)
+
+
+This seems to be a separate controller service to manage our other controllers, and a spec file;
+
+@3.02.20  now we are going to use the nestCLI to make a controller and stuff for the reports;
+(terminal log):
+drew ==>nest g module report
+CREATE src/report/report.module.ts (83 bytes)
+UPDATE src/app.module.ts (759 bytes)
+drew ==>nest g controller report
+CREATE src/report/report.controller.spec.ts (492 bytes)
+CREATE src/report/report.controller.ts (101 bytes)
+UPDATE src/report/report.module.ts (174 bytes)
+drew ==>nest g service report
+CREATE src/report/report.service.spec.ts (460 bytes)
+CREATE src/report/report.service.ts (90 bytes)
+UPDATE src/report/report.module.ts (254 bytes)
+drew ==>
+
+@3.03.10  --> begin extracting the code into our generated folders/files;
+
+
+
+
+
 

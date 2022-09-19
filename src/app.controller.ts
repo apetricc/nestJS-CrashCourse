@@ -20,7 +20,7 @@ import { Controller, Get, Post, Put, Delete, Param, Body, HttpCode, ParseIntPipe
 import { v4 as uuid } from "uuid";
 import { type } from "os";
 import { data, ReportType } from "src/data"
-import { CreateReportDto, UpdateReportDto } from "src/dtos/report.dto" //aka "./dtos/report.dto"
+import { CreateReportDto, UpdateReportDto, ReportResponseDto } from "src/dtos/report.dto" //aka "./dtos/report.dto"
 
 let myFunction = (a, b) => a / b;
 var hello = (val) => "Hello " + val;
@@ -69,7 +69,7 @@ export class AppController {
 
   // we use the Get() decorator above the method that will be a GET request
   @Get('')
-  getAllReports(@Param('type', new ParseEnumPipe(ReportType)) type: string) {
+  getAllReports(@Param('type', new ParseEnumPipe(ReportType)) type: string): ReportResponseDto[] {
     // we need to know if it's an INCOME or an EXPENSE report, but how do we get the dynamic field ":type" inside our method??
     // we do that with "param decorators"  -- so we have to import it like our other deocorators 1st
     // then we have to pass the param inside the parens "()", AND declare the type like this: @Param('paramName') type: string
@@ -89,7 +89,7 @@ export class AppController {
   @Get(':id')
   getReportById(
     @Param('type', new ParseEnumPipe(ReportType)) type: string,
-    @Param('id', ParseUUIDPipe) id: string) {
+    @Param('id', ParseUUIDPipe) id: string): ReportResponseDto {
     console.log(id, typeof(id));
     const reportType = type === "income" ? ReportType.INCOME : ReportType.EXPENSE;
     //find the report with a specific id--original version:
@@ -101,7 +101,7 @@ export class AppController {
   // to do the Post method, we need use the body of the request, and to access this we need to use the
   // @Body decorator (and import it to our controller TS file)
   @Post()      // we could say to import the @Body as "body" and give the types, or destructure it as its elements as "{amount, source}"
-  createReport(@Body() { amount, source }: CreateReportDto, @Param('type', new ParseEnumPipe(ReportType)) type: string) {
+  createReport(@Body() { amount, source }: CreateReportDto, @Param('type', new ParseEnumPipe(ReportType)) type: string): ReportResponseDto {
     // console.log({ body });
 
     //the 'in controller version':
@@ -170,7 +170,7 @@ export class AppController {
     // @Body() {amount, source}: {amount: number, source: string;},
     @Body() body: UpdateReportDto,
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('type', new ParseEnumPipe(ReportType)) type: string) {
+    @Param('type', new ParseEnumPipe(ReportType)) type: string): ReportResponseDto {
     // 1st thing, we want to find if the report exists; if so contintue with logic, else don't continue
     // const reportType = type === "income" ? ReportType.INCOME : ReportType.EXPENSE
     //find the report with a specific id in words: "looking at the data.report array of objects, FILTER the 'reports' WHERE

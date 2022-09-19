@@ -3,6 +3,7 @@ import { Injectable, Param, Body } from "@nestjs/common";
 
 import { ReportType, data } from "src/data"
 import { v4 as uuid } from "uuid";
+import { ReportResponseDto } from "./dtos/report.dto";
 let getReportType = (input: string): string => {
   return input === "income" ? ReportType.INCOME : ReportType.EXPENSE;//aka:
   // if(input === "income") return ReportType.INCOME;
@@ -24,17 +25,22 @@ interface UpdateReport {
 
 @Injectable()
 export class AppService {
-
-
-  getAllReports(type: ReportType) {
-    return data.report.filter((report) => report.type === type);
+  //we appended a map b/c data.report.filter((report) => report.type === type) returns an array
+  getAllReports(type: ReportType): ReportResponseDto[] {
+    // console.log("app service report filter:" + typeof (data.report.filter((report) => report.type === type)));
+    return data.report.filter((report) => report.type === type).
+      map((report) => new ReportResponseDto(report));
   }//getAllReports
 
-  getReportById(type: ReportType, id: string){
-    return data.report.filter((report) => report.type === type).find(report => report.id === id);
+  getReportById(type: ReportType, id: string): ReportResponseDto {
+    //put the report we filter for into a const
+    const report = data.report.filter((report) => report.type === type).find(report => report.id === id);
+    //if we don't find a report return early
+    if (!report) return;
+    return new ReportResponseDto(report);
   }
 
-  createReport(type: ReportType, {amount, source}: Report) {
+  createReport(type: ReportType, { amount, source }: Report): ReportResponseDto {
     const newReport = {
       id: uuid(),
       source,
@@ -45,10 +51,10 @@ export class AppService {
       type
     }
     data.report.push(newReport)
-    return newReport;
+    return new ReportResponseDto(newReport);
   }
 
-  updateReport(type: ReportType, id: string, body: UpdateReport) {
+  updateReport(type: ReportType, id: string, body: UpdateReport): ReportResponseDto {
     // const reportType = type === "income" ? ReportType.INCOME : ReportType.EXPENSE
     const reportToUpdate = data.report.filter((report) => report.type === type).find(report => report.id === id);
     if (!reportToUpdate) return;
@@ -58,13 +64,12 @@ export class AppService {
       ...body,
       updated_at: new Date()
     }
-    return data.report[reportIndex];
-
+    return new ReportResponseDto(data.report[reportIndex]);
   }
 
   deleteReport(id: string) {
     const reportIndex = data.report.findIndex(report => report.id === id);
-    if(reportIndex === -1) return;
+    if (reportIndex === -1) return;
     data.report.splice(reportIndex, 1);
     //not sure if this message is reachable?  with the @HttpCode(204)
     return `Deleted a report`;

@@ -9,8 +9,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateReportDto = exports.CreateReportDto = void 0;
+exports.ReportResponseDto = exports.UpdateReportDto = exports.CreateReportDto = void 0;
 const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
 class CreateReportDto {
 }
 __decorate([
@@ -39,4 +40,27 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateReportDto.prototype, "source", void 0);
 exports.UpdateReportDto = UpdateReportDto;
+class ReportResponseDto {
+    constructor(stuff) {
+        Object.assign(this, stuff);
+    }
+    transformCreatedAt() {
+        return this.created_at;
+    }
+}
+__decorate([
+    (0, class_transformer_1.Expose)({ name: "createdAt" }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ReportResponseDto.prototype, "transformCreatedAt", null);
+__decorate([
+    (0, class_transformer_1.Exclude)(),
+    __metadata("design:type", Date)
+], ReportResponseDto.prototype, "created_at", void 0);
+__decorate([
+    (0, class_transformer_1.Exclude)(),
+    __metadata("design:type", Date)
+], ReportResponseDto.prototype, "updated_at", void 0);
+exports.ReportResponseDto = ReportResponseDto;
 //# sourceMappingURL=report.dto.js.map

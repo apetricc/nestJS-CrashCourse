@@ -10,16 +10,21 @@ exports.AppService = void 0;
 const common_1 = require("@nestjs/common");
 const data_1 = require("./data");
 const uuid_1 = require("uuid");
+const report_dto_1 = require("./dtos/report.dto");
 let getReportType = (input) => {
     return input === "income" ? data_1.ReportType.INCOME : data_1.ReportType.EXPENSE;
 };
 ;
 let AppService = class AppService {
     getAllReports(type) {
-        return data_1.data.report.filter((report) => report.type === type);
+        return data_1.data.report.filter((report) => report.type === type).
+            map((report) => new report_dto_1.ReportResponseDto(report));
     }
     getReportById(type, id) {
-        return data_1.data.report.filter((report) => report.type === type).find(report => report.id === id);
+        const report = data_1.data.report.filter((report) => report.type === type).find(report => report.id === id);
+        if (!report)
+            return;
+        return new report_dto_1.ReportResponseDto(report);
     }
     createReport(type, { amount, source }) {
         const newReport = {
@@ -31,7 +36,7 @@ let AppService = class AppService {
             type
         };
         data_1.data.report.push(newReport);
-        return newReport;
+        return new report_dto_1.ReportResponseDto(newReport);
     }
     updateReport(type, id, body) {
         const reportToUpdate = data_1.data.report.filter((report) => report.type === type).find(report => report.id === id);
@@ -39,7 +44,7 @@ let AppService = class AppService {
             return;
         const reportIndex = data_1.data.report.findIndex((report) => report.id === reportToUpdate.id);
         data_1.data.report[reportIndex] = Object.assign(Object.assign(Object.assign({}, data_1.data.report[reportIndex]), body), { updated_at: new Date() });
-        return data_1.data.report[reportIndex];
+        return new report_dto_1.ReportResponseDto(data_1.data.report[reportIndex]);
     }
     deleteReport(id) {
         const reportIndex = data_1.data.report.findIndex(report => report.id === id);

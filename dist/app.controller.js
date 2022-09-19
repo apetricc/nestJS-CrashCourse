@@ -88,7 +88,7 @@ __decorate([
     __param(0, (0, common_1.Param)('type', new common_1.ParseEnumPipe(data_1.ReportType))),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Array)
 ], AppController.prototype, "getAllReports", null);
 __decorate([
     (0, common_1.Get)(':id'),
@@ -96,7 +96,7 @@ __decorate([
     __param(1, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", report_dto_1.ReportResponseDto)
 ], AppController.prototype, "getReportById", null);
 __decorate([
     (0, common_1.Post)(),
@@ -104,7 +104,7 @@ __decorate([
     __param(1, (0, common_1.Param)('type', new common_1.ParseEnumPipe(data_1.ReportType))),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [report_dto_1.CreateReportDto, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", report_dto_1.ReportResponseDto)
 ], AppController.prototype, "createReport", null);
 __decorate([
     __param(0, (0, common_1.Body)()),
@@ -121,7 +121,7 @@ __decorate([
     __param(2, (0, common_1.Param)('type', new common_1.ParseEnumPipe(data_1.ReportType))),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [report_dto_1.UpdateReportDto, String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", report_dto_1.ReportResponseDto)
 ], AppController.prototype, "updateReport", null);
 __decorate([
     (0, common_1.Delete)('/myDelete/' + ':id'),
