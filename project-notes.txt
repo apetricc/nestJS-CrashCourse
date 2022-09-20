@@ -405,6 +405,42 @@ UPDATE src/report/report.module.ts (254 bytes)
 drew ==>
 
 @3.03.10  --> begin extracting the code into our generated folders/files;
+We actually made a mistake, so we need to delete the 'service' folder,
+and remove the imports from app.module.ts;
+
+copy everything from app.service.ts and replace report.service.ts with that code;
+update dtos import by saying either
+import { ReportResponseDto } from "src/dtos/report.dto";  OR
+import { ReportResponseDto } from "../dtos/report.dto";   which is the relative path
+We also update the name of the export class from AppService --> ReportService
+and we can empty out our app.service.ts class, and just keep it as an empty class for now;
+@3.05.15
+now we do the same for the app.controller.ts file into report.controller.ts
+update the import from { AppService }  to { ReportService } from "./report.service";
+and the dto import path;
+and update the constructor to construct a new "ReportService" as we're calling it,
+as well as the controller to be ReportService as well:
+@Controller('report/:type')
+export class ReportController {
+
+  // we can export the constructor..?
+  constructor(
+    private readonly appService: ReportService
+  ){}
+
+
+we removed / commented the logic from app.controller.ts and left an empty class there;
+we tested to make sure everything is still working as expected, which it is;
+Now everything is in separate folders and that is an improvement on our old file structure;
+
+
+@3.09  now we will start working on summary controller
+
+
+
+
+
+
 
 
 

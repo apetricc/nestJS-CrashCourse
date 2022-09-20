@@ -8,51 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppService = void 0;
 const common_1 = require("@nestjs/common");
-const data_1 = require("./data");
-const uuid_1 = require("uuid");
-const report_dto_1 = require("./dtos/report.dto");
-let getReportType = (input) => {
-    return input === "income" ? data_1.ReportType.INCOME : data_1.ReportType.EXPENSE;
-};
-;
 let AppService = class AppService {
-    getAllReports(type) {
-        return data_1.data.report.filter((report) => report.type === type).
-            map((report) => new report_dto_1.ReportResponseDto(report));
-    }
-    getReportById(type, id) {
-        const report = data_1.data.report.filter((report) => report.type === type).find(report => report.id === id);
-        if (!report)
-            return;
-        return new report_dto_1.ReportResponseDto(report);
-    }
-    createReport(type, { amount, source }) {
-        const newReport = {
-            id: (0, uuid_1.v4)(),
-            source,
-            amount,
-            created_at: new Date(),
-            updated_at: new Date(),
-            type
-        };
-        data_1.data.report.push(newReport);
-        return new report_dto_1.ReportResponseDto(newReport);
-    }
-    updateReport(type, id, body) {
-        const reportToUpdate = data_1.data.report.filter((report) => report.type === type).find(report => report.id === id);
-        if (!reportToUpdate)
-            return;
-        const reportIndex = data_1.data.report.findIndex((report) => report.id === reportToUpdate.id);
-        data_1.data.report[reportIndex] = Object.assign(Object.assign(Object.assign({}, data_1.data.report[reportIndex]), body), { updated_at: new Date() });
-        return new report_dto_1.ReportResponseDto(data_1.data.report[reportIndex]);
-    }
-    deleteReport(id) {
-        const reportIndex = data_1.data.report.findIndex(report => report.id === id);
-        if (reportIndex === -1)
-            return;
-        data_1.data.report.splice(reportIndex, 1);
-        return `Deleted a report`;
-    }
 };
 AppService = __decorate([
     (0, common_1.Injectable)()
