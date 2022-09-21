@@ -15,7 +15,8 @@ let ReportModule = class ReportModule {
 ReportModule = __decorate([
     (0, common_1.Module)({
         controllers: [report_controller_1.ReportController],
-        providers: [report_service_1.ReportService]
+        providers: [report_service_1.ReportService],
+        exports: [report_service_1.ReportService]
     })
 ], ReportModule);
 exports.ReportModule = ReportModule;

@@ -32,7 +32,7 @@ export const data: Data = {
         {
             id: "uuid2",
             source: "YouTube",
-            amount: 3200,
+            amount: 2500,
             created_at: new Date(),
             updated_at: new Date(),
             type: ReportType.INCOME
@@ -40,7 +40,7 @@ export const data: Data = {
         {
             id: "uuid3",
             source: "Food",
-            amount: 400,
+            amount: 500,
             created_at: new Date(),
             updated_at: new Date(),
             type: ReportType.EXPENSE
@@ -77,7 +77,7 @@ interface Data {
 data.report.push({
     id: "uuid",
     source: "Salary",
-    amount: 7500,
+    amount: 1,
     created_at: new Date(),
     updated_at: new Date(),
     type: ReportType.INCOME

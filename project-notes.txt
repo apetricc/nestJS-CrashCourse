@@ -436,10 +436,18 @@ Now everything is in separate folders and that is an improvement on our old file
 
 @3.09  now we will start working on summary controller
 
+add @Get endpoint for getSummary()
+generate a new service for summary  --> nest g service summary
 
-
-
-
+one way to let summary service see ReportService is to: 
+import { ReportService } from 'src/report/report.service'   --> & add ReportService to 'providers'
+but we should instead import the whole module, that imports everything from module 'report'
+to do this we add the property-- "imports: [ReportModule]"  to the @Module arguments, and 
+we have to go back to report.module.ts and explicitly tell it what to export from there also
+we do that by adding an 'exports' property to the @Module
+@Module({
+  exports: [ReportService, otherServiceWeWantToExportFromReportModule'sName]
+})
 
 
 
